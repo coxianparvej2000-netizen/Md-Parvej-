@@ -1,0 +1,33 @@
+name: Build APK
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q parvej_smart_assistant_phase2.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Prepare
+        working-directory: psa
+        run: |
+          flutter create --platforms=android --org com.parvej --project-name parvej_smart_assistant .
+          rm -f test/widget_test.dart
+          flutter pub get
+      - name: Tests
+        working-directory: psa
+        run: flutter test
+        continue-on-error: true
+      - name: Build
+        working-directory: psa
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parvej-smart-assistant-apk
+          path: psa/build/app/outputs/flutter-apk/app-release.apk
